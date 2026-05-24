@@ -6,9 +6,13 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity(name = "tb_task")
 public class Task {
     @Id
@@ -24,5 +28,4 @@ public class Task {
     private Integer duration;
     @Column(name = "priority", nullable = false)
     private Integer priority;
-    
 }
