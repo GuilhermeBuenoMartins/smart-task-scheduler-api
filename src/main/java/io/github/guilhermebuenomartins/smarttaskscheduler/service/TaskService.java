@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.github.guilhermebuenomartins.smarttaskscheduler.config.VariableConfig;
 import io.github.guilhermebuenomartins.smarttaskscheduler.dto.TaskDto;
-import io.github.guilhermebuenomartins.smarttaskscheduler.dto.TaskInsertionRequestDto;
+import io.github.guilhermebuenomartins.smarttaskscheduler.dto.TaskInsertionDto;
 import io.github.guilhermebuenomartins.smarttaskscheduler.dto.TaskResponseDto;
 import io.github.guilhermebuenomartins.smarttaskscheduler.model.Status;
 import io.github.guilhermebuenomartins.smarttaskscheduler.model.Task;
@@ -23,7 +23,7 @@ public class TaskService {
     @Autowired
     private TaskRepository repository;
 
-    public List<TaskResponseDto> insert(List<TaskInsertionRequestDto> dtos){
+    public List<TaskResponseDto> insert(List<TaskInsertionDto> dtos){
         List<TaskDto> filteredDtos = filter(dtos.stream().map(dto -> (TaskDto) dto).toList());
         if (filteredDtos.isEmpty()) { return List.of(); }
         ObjectMapper mapper = new ObjectMapper();

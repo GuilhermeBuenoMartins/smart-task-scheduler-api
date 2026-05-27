@@ -1,14 +1,20 @@
-package io.github.guilhermebuenomartins.smarttaskscheduler.service;
+package io.github.guilhermebuenomartins.smarttaskscheduler.controller.impl;
 
 import java.util.List;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.github.guilhermebuenomartins.smarttaskscheduler.config.VariableConfig;
 import io.github.guilhermebuenomartins.smarttaskscheduler.dto.TaskInsertionDto;
@@ -18,12 +24,14 @@ import io.github.guilhermebuenomartins.smarttaskscheduler.model.Task;
 import io.github.guilhermebuenomartins.smarttaskscheduler.repository.TaskRepository;
 
 @SpringBootTest
-@DisplayName("Test of TaskService")
-public class TaskServiceTest {
+@AutoConfigureMockMvc
+public class TaskControllerImplTest {
+    private static final String TASK_ENDPOINT = "/api/task/list";
+    private ObjectMapper mapper = new ObjectMapper();
     @Autowired
     private VariableConfig config;
     @Autowired
-    private TaskService service;
+    private MockMvc mockMvc;
     @MockitoBean
     private TaskRepository repository;
 
@@ -40,11 +48,11 @@ public class TaskServiceTest {
      *  <li><code>starttime</code>, <code>duration</code> and <code>priority</code> near to upper limit</li>
      * </ul>
      * Upper limits was removed and, therefore, not tested to satisfied the business rules.
+     * @throws Exception
      */
     @Test
-    @DisplayName("Test Insert")
     @SuppressWarnings("null")
-    public void testInsert() {
+    void testInsert() throws Exception {
         // Create mocks
         List<Task> mockedInputTasks = List.of(
             new Task(
@@ -71,13 +79,47 @@ public class TaskServiceTest {
             new TaskInsertionDto(
                 config.getStartTimeUpperLimit(), config.getDurationUpperLimit(), config.getPriorityUpperLimit())
         );
-        List<TaskResponseDto> expectedResponseDtos = List.of(
+        List<TaskResponseDto> expectedResponse = List.of(
             new TaskResponseDto(
                 1, config.getStartTimeLowerLimit(), Status.NEW, config.getDurationLowerLimit(), config.getPriorityLowerLimit()),
             new TaskResponseDto(
                 2, config.getStartTimeUpperLimit(), Status.NEW, config.getDurationUpperLimit(), config.getPriorityUpperLimit())
             );
-        List<TaskResponseDto> responseDtos = service.insert(insertionRequestDtos);
-        Assertions.assertEquals(expectedResponseDtos, responseDtos);
+        String responseBody = mapper.writeValueAsString(expectedResponse);
+        String requestBody = mapper.writeValueAsString(insertionRequestDtos);
+        mockMvc.perform(MockMvcRequestBuilders
+            .post(TASK_ENDPOINT)
+            .content(requestBody)
+            .contentType(MediaType.APPLICATION_JSON))
+            .andExpectAll(
+                MockMvcResultMatchers.status().isCreated(), MockMvcResultMatchers.content().json(responseBody)
+            ).andDo(MockMvcResultHandlers.print());
+    }
+
+    /**
+     * Test Insert Empty List
+     * 
+     * Test condiction when the filter return a empty list.
+     * @throws Exception
+     */
+    @Test
+    @SuppressWarnings("null")
+    void testInsertEmptyList() throws Exception {
+        List<TaskInsertionDto> insertionRequestDtos = List.of(
+            new TaskInsertionDto(
+                config.getStartTimeLowerLimit() - 1, config.getDurationLowerLimit(), config.getPriorityLowerLimit()),
+            new TaskInsertionDto(
+                config.getStartTimeLowerLimit(), config.getDurationLowerLimit() - 1, config.getPriorityLowerLimit()),
+            new TaskInsertionDto(
+                config.getStartTimeLowerLimit(), config.getDurationLowerLimit(), config.getPriorityLowerLimit() - 1)
+        );
+        String requestBody = mapper.writeValueAsString(insertionRequestDtos);
+        mockMvc.perform(MockMvcRequestBuilders
+            .post(TASK_ENDPOINT)
+            .content(requestBody)
+            .contentType(MediaType.APPLICATION_JSON))
+            .andExpectAll(
+                MockMvcResultMatchers.status().isCreated(), MockMvcResultMatchers.content().json("[]")
+            ).andDo(MockMvcResultHandlers.print());
     }
 }
