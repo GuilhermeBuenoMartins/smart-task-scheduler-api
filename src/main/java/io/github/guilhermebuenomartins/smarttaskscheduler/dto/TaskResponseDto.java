@@ -3,8 +3,10 @@ package io.github.guilhermebuenomartins.smarttaskscheduler.dto;
 import io.github.guilhermebuenomartins.smarttaskscheduler.model.Status;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "Task Response DTO")
 public class TaskResponseDto extends TaskDto {
     @Schema(example = "0")

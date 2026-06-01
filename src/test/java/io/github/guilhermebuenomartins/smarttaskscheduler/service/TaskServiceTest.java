@@ -1,6 +1,7 @@
 package io.github.guilhermebuenomartins.smarttaskscheduler.service;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -8,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import io.github.guilhermebuenomartins.smarttaskscheduler.config.VariableConfig;
@@ -78,6 +81,68 @@ public class TaskServiceTest {
                 2, config.getStartTimeUpperLimit(), Status.NEW, config.getDurationUpperLimit(), config.getPriorityUpperLimit())
             );
         List<TaskResponseDto> responseDtos = service.insert(insertionRequestDtos);
+        Assertions.assertEquals(expectedResponseDtos, responseDtos);
+    }
+
+    /**
+     * Test FindAll
+     * 
+     * Return all tasks in the database with default filters: page = 0, size = 5 and statuses = [NEW, INITIATED].
+     */
+    @Test
+    @SuppressWarnings("null")
+    public void testFindAll() {
+        // Create mocks
+        List<Task> mockedTasks = List.of(
+            new Task(
+                1, config.getStartTimeLowerLimit(), Status.NEW, config.getDurationLowerLimit(), config.getPriorityLowerLimit()),
+            new Task(
+                2, config.getStartTimeUpperLimit(), Status.NEW, config.getDurationUpperLimit(), config.getPriorityUpperLimit()),
+            new Task(
+                3, config.getStartTimeLowerLimit(), Status.INITIATED, config.getDurationLowerLimit(), config.getPriorityLowerLimit()),
+            new Task(
+                4, config.getStartTimeUpperLimit(), Status.INITIATED, config.getDurationUpperLimit(), config.getPriorityUpperLimit())
+            );
+        Mockito.when(repository.findByStatusIn(Mockito.eq(Set.of(Status.NEW, Status.INITIATED)), Mockito.any()))
+            .thenReturn(new PageImpl<>(mockedTasks));
+        // Executing Test
+        Page<TaskResponseDto> expectedResponseDtos = new PageImpl<>(List.of(
+            new TaskResponseDto(
+                1, config.getStartTimeLowerLimit(), Status.NEW, config.getDurationLowerLimit(), config.getPriorityLowerLimit()),
+            new TaskResponseDto(
+                2, config.getStartTimeUpperLimit(), Status.NEW, config.getDurationUpperLimit(), config.getPriorityUpperLimit()),
+            new TaskResponseDto(
+                3, config.getStartTimeLowerLimit(), Status.INITIATED, config.getDurationLowerLimit(), config.getPriorityLowerLimit()),
+            new TaskResponseDto(
+                4, config.getStartTimeUpperLimit(), Status.INITIATED, config.getDurationUpperLimit(), config.getPriorityUpperLimit())
+            ));
+        Page<TaskResponseDto> responseDtos = service.findAll(1, 5, Set.of(Status.NEW, Status.INITIATED));
+        Assertions.assertEquals(expectedResponseDtos, responseDtos);
+    }
+
+    /***
+     * Test FindAll with a status COMPLETED
+     */
+    @Test
+    @SuppressWarnings("null")
+    public void testFindAllWithAStatus() {
+        // Create mocks
+        List<Task> mockedTasks = List.of(
+            new Task(
+                5, config.getStartTimeLowerLimit(), Status.COMPLETED, 0, config.getPriorityLowerLimit()),
+            new Task(
+                6, config.getStartTimeUpperLimit(), Status.COMPLETED, 0, config.getPriorityUpperLimit())
+            );
+        Mockito.when(repository.findByStatusIn(Mockito.eq(Set.of(Status.COMPLETED)), Mockito.any()))
+            .thenReturn(new PageImpl<>(mockedTasks));
+        // Executing Test
+        Page<TaskResponseDto> expectedResponseDtos = new PageImpl<>(List.of(
+            new TaskResponseDto(
+                5, config.getStartTimeLowerLimit(), Status.COMPLETED, 0, config.getPriorityLowerLimit()),
+            new TaskResponseDto(
+                6, config.getStartTimeUpperLimit(), Status.COMPLETED, 0, config.getPriorityUpperLimit())
+            ));
+        Page<TaskResponseDto> responseDtos = service.findAll(1, 5, Set.of(Status.COMPLETED));
         Assertions.assertEquals(expectedResponseDtos, responseDtos);
     }
 }

@@ -1,8 +1,13 @@
 package io.github.guilhermebuenomartins.smarttaskscheduler.service;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -45,5 +50,12 @@ public class TaskService {
             && (dto.getDuration() >= durationLowerLimit && dto.getDuration() <= durationUpperLimit)
             && (dto.getPriority() >= priorityLowerLimit && dto.getPriority() <= priorityUpperLimit)
         ).toList();
+    }
+
+    public Page<TaskResponseDto> findAll(Integer page, Integer size, Set<Status> statuses) {
+        ObjectMapper mapper = new ObjectMapper();
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
+        Page<Task> taskPage = repository.findByStatusIn(statuses, pageable);
+        return taskPage.map(task -> mapper.convertValue(task, TaskResponseDto.class));
     }
 }
